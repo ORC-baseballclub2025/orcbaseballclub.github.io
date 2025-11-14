@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>選手成績</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1 id="playerName">選手名</h1>
+</header>
+
+<main>
+  <div class="card">
+    <table id="detailTable"></table>
+  </div>
+
+  <p><a href="index.html" class="back">← 一覧に戻る</a></p>
+</main>
+
+<script>
+const SPREADSHEET_ID = "119bZBgox4lf5CURFeGfsFjMi2X9auUqCHRtmAHtXC1A";
+const API_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=`;
+
+const params = new URLSearchParams(location.search);
+const name = params.get("name");
+
+document.getElementById("playerName").textContent = name;
+
+async function getSheet(sheetName) {
+    const url = API_URL + encodeURIComponent(sheetName);
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substr(47).slice(0, -2));
+    return json.table;
+}
+
+async function loadPlayer() {
+    const data = await getSheet(name);
+
+    const row = data.rows[0].c.map(c => c ? c.v : "");
+
+    const labels = [
+      "参加数","打席","打数","安打","得点","打点","四死球","盗塁",
+      "二塁打","三塁打","本塁打","犠打","三振","打率","出塁率"
+    ];
+
+    let html = "";
+    for (let i = 0; i < labels.length; i++) {
+        html += `<tr><th>${labels[i]}</th><td>${row[i]}</td></tr>`;
+    }
+
+    document.getElementById("detailTable").innerHTML = html;
+}
+
+loadPlayer();
+</script>
+
+</body>
+</html>
