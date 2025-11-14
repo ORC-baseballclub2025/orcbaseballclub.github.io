@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>野球部成績一覧</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>野球部 成績一覧</h1>
+</header>
+
+<main>
+  <table id="playerTable">
+    <thead>
+      <tr>
+        <th>選手</th>
+        <th>参加</th>
+        <th>打席</th>
+        <th>打数</th>
+        <th>安打</th>
+        <th>得点</th>
+        <th>打点</th>
+        <th>本塁打</th>
+        <th>打率</th>
+        <th>出塁率</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</main>
+
+<script>
+const SPREADSHEET_ID = "119bZBgox4lf5CURFeGfsFjMi2X9auUqCHRtmAHtXC1A";
+const API_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=`;
+
+async function getSheet(sheetName) {
+    const url = API_URL + encodeURIComponent(sheetName);
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substr(47).slice(0, -2));
+    return json.table;
+}
+
+async function loadPlayers() {
+    // シートリスト取得
+    const sheetRes = await fetch(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}`);
+    const txt = await sheetRes.text();
+
+    const matches = [...txt.matchAll(/"gid":(\d+),"title":"([^"]+)"/g)];
+    const sheetNames = matches.map(m => m[2]).filter(n => !n.includes("設定") && !n.includes("Sheet"));
+
+    const tbody = document.querySelector("#playerTable tbody");
+
+    for (const name of sheetNames) {
+        const data = await getSheet(name);
+
+        // 1行目のデータ
+        const row = data.rows[0].c;
+
+        const td = (i) => row[i] ? row[i].v : "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><a href="player.html?name=${name}">${name}</a></td>
+          <td>${td(0)}</td>
+          <td>${td(1)}</td>
+          <td>${td(2)}</td>
+          <td>${td(3)}</td>
+          <td>${td(4)}</td>
+          <td>${td(5)}</td>
+          <td>${td(10)}</td>
+          <td>${td(13)}</td>
+          <td>${td(14)}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+loadPlayers();
+</script>
+
+</body>
+</html>
